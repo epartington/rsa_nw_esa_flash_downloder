@@ -1,0 +1,22 @@
+module Module_flashdown_20181109093400;
+
+@Name('Module_flashdown_20181109093400_Alert')
+@Description('flash_to_download - https://community.rsa.com/community/products/netwitness/blog/2016/11/23/looking-behind-the-curtain-how-rsa-netwitness-packets-and-endpoint-see-a-cerber-ransomware-compromise')
+@RSAAlert(oneInSeconds=0)
+
+SELECT * FROM Event(
+/* Statement: find_flash */
+(isOneOfIgnoreCase(content,{ 'application/x-shockwave-flash' }))
+OR
+/* Statement: find_download */
+(isOneOfIgnoreCase(content,{ 'application/x-msdownload' }))
+
+).win:time(15 seconds)
+MATCH_RECOGNIZE (
+PARTITION BY ip_src
+MEASURES E1 as e1_data , E2 as e2_data
+PATTERN (E1 E2) 
+DEFINE
+E1 as (isOneOfIgnoreCase(E1.content,{ 'application/x-shockwave-flash' })),
+E2 as (isOneOfIgnoreCase(E2.content,{ 'application/x-msdownload' }))
+);
